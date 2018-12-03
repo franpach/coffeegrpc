@@ -119,8 +119,11 @@ public class CoffeeServerClient {
 		if (args.length > 3) {
     	 	 capsulePressure = Float.parseFloat(args[3]); /* fourth argument is capsule pressure */      
        	}
- 		if (args.length > 4) {
-    	 	 port = Integer.parseInt(args[4]); /* fifth argument is the listening port */
+		if (args.length > 4) {
+    	 	 host = args[4]; /* fifth argument is the host */       	
+		}
+ 		if (args.length > 5) {
+    	 	 port = Integer.parseInt(args[5]); /* sixth argument is the listening port */
        	}
 		typeOp=1;		
 	  } catch (NumberFormatException e) {
