@@ -28,6 +28,10 @@ import iotucm.coffeeservice.CapsuleConsumedRequest;
 import iotucm.coffeeservice.CoffeeServerGrpc;
 import iotucm.coffeeservice.*;
 
+/** new methods */
+import iotucm.coffeeservice.MachineStatus;
+import iotucm.coffeeservice.AnalysisResults;
+
 /**
  * A simple client that requests a greeting from the {@link CoffeeServerServer}.
  */
@@ -73,34 +77,73 @@ public class CoffeeServerClient {
     	logger.info("There is still coffee. Expected remaining " + response.getExpectedRemaining());
   }
 
+  /** Checks machine status*/
+  public void checkMachineStatus(float watertemperature, int timeconnected, float capsulepressure) {
+	logger.info("Checking machine status if water temperature is " + watertemperature + "degrees, total time connected is " + timeconnected + " and the capsule pressure is " + capsulepressure + " bars");
+	MachineStatus mstatus = MachineStatus.newBuilder().setWaterTemperature(watertemperature).setTimeConnected(timeconnected).setCapsulePressure(capsulepressure).build();
+	AnalysisResults result;
+	try {
+	  result = blockingStub.checkMachineStatus(mstatus);
+	} catch (StatusRuntimeException e) {
+	  logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+       return;
+	}
+	if (result.getStatus() == true) 
+	  logger.info("Result: machine status is ok!");
+	else
+	  logger.info("There is a problem with the machine: " + result.getMachineProblem() + " . Expected technician delivery: "+ result.getDateTechnician());
+  }
+
   /**
    * Coffee server code. The first argument is the client id, the second, the capsule type, the fourth the server ip, the fifth the port.
    */
   public static void main(String[] args) throws Exception {
-	  String clientid = "myclientid";
+	 String clientid = "myclientid";
       String capsuletype= "ristretto";
+	 float waterTemperature = 90;
+	 int timeConnected = 100;
+      float capsulePressure = 19;
       int port=50051;
+	 int typeOp = 1; 
       String host="localhost";
       if (args.length > 0) {
     	  clientid = args[0]; /* First argument is the clientid */
       }
       if (args.length > 1) {
-    	  capsuletype = args[1]; /* second argument is the capsule type */
-      }
+	  try {
+		Integer.parseInt(args[1]);
+		waterTemperature = Float.parseFloat(args[1]);
+		if (args.length > 2) {
+    	 	 timeConnected = Integer.parseInt(args[2]); /* third argument is timeConnected */      
+       	}
+		if (args.length > 3) {
+    	 	 capsulePressure = Float.parseFloat(args[3]); /* fourth argument is capsule pressure */      
+       	}
+ 		if (args.length > 4) {
+    	 	 port = Integer.parseInt(args[4]); /* fifth argument is the listening port */
+       	}
+		typeOp=1;		
+	  } catch (NumberFormatException e) {
+		capsuletype = args[1]; /* second argument is the capsule type */
+		if (args.length > 2) {
+    	  	 host = args[2]; /* third argument is the host */      
+      	}
+      	if (args.length > 3) {
+    	  	 port = Integer.parseInt(args[3]); /* fourth argument is the listening port */
+      	}
+		typeOp=2;
+	  } finally {
+		CoffeeServerClient client = new CoffeeServerClient(host, port);
+	     try {   
+		  if(typeOp==2)   
+			  client.consumeCapsule(clientid,capsuletype);
+		  else
+			  client.checkMachineStatus(waterTemperature, timeConnected, capsulePressure);
+	     } finally {
+		  client.shutdown();
+	     }
+	  }
+    } 
       
-      if (args.length > 2) {
-    	  host = args[2]; /* third argument is the host */      
-      }
-      
-      if (args.length > 3) {
-    	  port = Integer.parseInt(args[3]); /* fourth argument is the listening port */
-      }
-      
-    CoffeeServerClient client = new CoffeeServerClient(host, port);
-    try {      
-      client.consumeCapsule(clientid,capsuletype);
-    } finally {
-      client.shutdown();
-    }
   }
 }

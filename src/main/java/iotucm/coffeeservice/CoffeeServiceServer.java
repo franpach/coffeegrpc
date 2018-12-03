@@ -24,6 +24,10 @@ import iotucm.coffeeservice.CapsuleConsumedRequest;
 import iotucm.coffeeservice.CoffeeServerGrpc;
 import iotucm.coffeeservice.*;
 
+/** new methods */
+import iotucm.coffeeservice.MachineStatus;
+import iotucm.coffeeservice.AnalysisResults;
+
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -100,5 +104,26 @@ public class CoffeeServiceServer {
 	    responseObserver.onCompleted();
 	}
   
+     // New method
+     public void checkMachineStatus(MachineStatus mstatus, StreamObserver<AnalysisResults> responseObserver) {
+		AnalysisResults result = null;
+		if (mstatus.getWaterTemperature() < 85) {
+		  result = AnalysisResults.newBuilder().setStatus(false).setMachineProblem("Water is too cold").setDateTechnician("tomorrow").build();
+		}
+		else if (mstatus.getWaterTemperature() > 100) {
+		  result = AnalysisResults.newBuilder().setStatus(false).setMachineProblem("Water is too hot").setDateTechnician("tomorrow").build();
+		}
+		else if (mstatus.getCapsulePressure() < 9) {
+		  result = AnalysisResults.newBuilder().setStatus(false).setMachineProblem("Capsule pressure is too low").setDateTechnician("tomorrow").build();
+		}
+		else if (mstatus.getCapsulePressure() > 19) {
+		  result = AnalysisResults.newBuilder().setStatus(false).setMachineProblem("Capsule pressure is too high").setDateTechnician("tomorrow").build();
+		}
+		else {
+		  result = AnalysisResults.newBuilder().setStatus(true).setMachineProblem("Everything ok").setDateTechnician("not yet").build();
+		}
+		responseObserver.onNext(result);
+	     responseObserver.onCompleted();
+	}
   }
 }
